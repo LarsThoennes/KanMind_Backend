@@ -7,19 +7,17 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.response import Response
 
 class TasksView(generics.ListCreateAPIView):
-    serializer_class = TaskSerializer # wenn Daten reinkommen oder rausgehen werden diese in den Serializer gepackt
-    permission_classes = [IsAuthenticated] # nur angemeldetet user dürfen Tasks erstellen
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self): # GET Anfragen
+    def get_queryset(self):
         user = self.request.user 
-        # Hier wird entschieden welcher tasks der user sehen darf
         return Task.objects.filter(
-            Q(owner=user) # Tasks die der user erstellt hat
-              | Q(assignee=user) # Tasks denen der user zugewiesen wurde
-              | Q(reviewer=user) # Tasks bei denen der user reviewer ist
-        ).distinct() # Entfernt duplikate falls der user mehrere Rollen im task hat
+            Q(owner=user) 
+              | Q(assignee=user) 
+              | Q(reviewer=user) 
+        ).distinct() 
 
-    # POST Anfragen
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -42,7 +40,6 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise NotFound("Task nicht gefunden.")
 
         user = self.request.user
-        # Nur Owner, Assignee oder Reviewer dürfen Task bearbeiten
         if not (task.owner == user or task.assignee == user or task.reviewer == user):
             raise PermissionDenied("Du darfst diese Task nicht bearbeiten oder löschen.")
 
@@ -77,7 +74,6 @@ class TaskCommentsView(generics.ListCreateAPIView):
         task = self.get_task()
         user = self.request.user
 
-        # Nur berechtigte Nutzer dürfen Kommentare sehen
         if not (task.owner == user or task.assignee == user or task.reviewer == user):
             raise PermissionDenied("Du darfst die Kommentare dieser Task nicht sehen.")
 
@@ -88,7 +84,6 @@ class TaskCommentsView(generics.ListCreateAPIView):
         task = self.get_task()
         user = self.request.user
 
-        # Zugriff prüfen
         if not (task.owner == user or task.assignee == user or task.reviewer == user):
             raise PermissionDenied("Du darfst zu dieser Task keinen Kommentar hinzufügen.")
 
@@ -110,13 +105,11 @@ class TaskCommentDetailView(generics.DestroyAPIView):
         task_id = self.kwargs["task_id"]
         comment_id = self.kwargs["comment_id"]
 
-        # Task holen oder 404 werfen
         try:
             task = Task.objects.get(pk=task_id)
         except Task.DoesNotExist:
             raise NotFound("Task nicht gefunden.")
 
-        # Kommentar holen oder 404 werfen
         try:
             comment = Comment.objects.get(pk=comment_id, task=task)
         except Comment.DoesNotExist:
@@ -124,7 +117,6 @@ class TaskCommentDetailView(generics.DestroyAPIView):
 
         user = self.request.user
 
-        # Berechtigung prüfen (nur Autor oder Task-Owner darf löschen)
         if not (comment.author == user or task.owner == user):
             raise PermissionDenied("Du darfst diesen Kommentar nicht löschen.")
 

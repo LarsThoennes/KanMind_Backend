@@ -40,7 +40,6 @@ class BoardSerializer(serializers.ModelSerializer):
         return board
 
 
-    # Hier die Methoden für die SerializerMethodFields
     def get_member_count(self, obj):
         return obj.members.count()
 

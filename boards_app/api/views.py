@@ -44,5 +44,5 @@ class EmailCheckView(APIView):
         return Response({
             "id": user.id,
             "email": user.email,
-            "fullname": user.username,  # falls du full_name hast: user.get_full_name() or user.full_name
+            "fullname": user.username, 
         })

@@ -1,4 +1,3 @@
-# user_auth_app/api/urls.py
 from django.urls import path
 from .views import BoardsView, BoardDetailView, EmailCheckView
 

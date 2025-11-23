@@ -57,14 +57,12 @@ class EmailCheckView(APIView):
     def get(self, request):
         email = request.query_params.get("email")
 
-        # 1️⃣ Kein Email-Parameter vorhanden
         if not email:
             return Response(
                 {"detail": "Die Email-Adresse muss angegeben werden."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 2️⃣ Prüfen, ob Email-Format gültig ist
         try:
             validate_email(email)
         except ValidationError:
@@ -73,7 +71,6 @@ class EmailCheckView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 3️⃣ Prüfen, ob Email existiert
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
@@ -81,11 +78,10 @@ class EmailCheckView(APIView):
                 {"detail": "Die angegebene Email wurde nicht gefunden."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        # 4️⃣ Wenn gefunden → Response mit Userdaten
+        
         data = {
             "id": user.id,
             "email": user.email,
-            "fullname": user.username,  # username ist dein Fullname
+            "fullname": user.username,
         }
         return Response(data, status=status.HTTP_200_OK)
