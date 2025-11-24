@@ -70,7 +70,13 @@ class TaskCommentsView(generics.ListCreateAPIView):
         if not (task.owner == user or task.assignee == user or task.reviewer == user):
             raise PermissionDenied("Du darfst die Kommentare dieser Task nicht sehen.")
 
-        return Comment.objects.filter(task=task).order_by("created_at")
+        queryset = Comment.objects.filter(task=task).order_by("created_at")
+
+        # 🔥 Wenn keine Kommentare vorhanden sind → 404
+        if not queryset.exists():
+            raise NotFound("Keine Kommentare für diese Task gefunden.")
+
+        return queryset
 
     def perform_create(self, serializer):
         """Erstellt neuen Kommentar (POST)."""
