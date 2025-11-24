@@ -71,6 +71,13 @@ class UserCompactSerializer(serializers.ModelSerializer):
 class BoardDetailSerializer(serializers.ModelSerializer):
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
     members = UserCompactSerializer(many=True, read_only=True)
+    member_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        write_only=True,
+        queryset=User.objects.all(),
+        required=False,
+        source="members",
+    )
     tasks = TaskCompactSerializer(many=True, read_only=True)
 
     class Meta:
@@ -78,8 +85,29 @@ class BoardDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
-            "owner_id",
-            "members",
+            "owner_id",     # → nur ID
+            "members",      # → lesbar (Userdaten)
+            "member_ids",   # → beschreibbar (IDs)
             "tasks"
         ]
-        read_only_fields = fields
+        read_only_fields = ["id", "owner_id", "members", "tasks"]
+
+    def update(self, instance, validated_data):
+        members = validated_data.pop("members", None)
+        instance = super().update(instance, validated_data)
+        if members is not None:
+            instance.members.set(members)
+        return instance
+
+class BoardDetailWithOwnerSerializer(BoardDetailSerializer):
+    owner_data = UserCompactSerializer(source="owner", read_only=True)
+    members_data = UserCompactSerializer(source="members", many=True, read_only=True)
+
+    class Meta(BoardDetailSerializer.Meta):
+        fields = [
+            "id",
+            "title",
+            "owner_data",    # → vollständige Owner-Daten
+            "members_data",  # → vollständige Member-Daten
+            "member_ids",    # → beschreibbar (IDs)
+        ]

@@ -1,0 +1,39 @@
+# 🐍 Python & Django
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Django database
+db.sqlite3
+
+# Django static and media files
+/staticfiles/
+/media/
+
+# Local environment variables
+.env
+*.env
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.old

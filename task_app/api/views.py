@@ -5,43 +5,42 @@ from .serializers import TaskSerializer, CommentSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404
 
 class TasksView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user 
+        user = self.request.user
         return Task.objects.filter(
-            Q(owner=user) 
-              | Q(assignee=user) 
-              | Q(reviewer=user) 
-        ).distinct() 
+            Q(owner=user) | Q(assignee=user) | Q(reviewer=user)
+        ).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        """
+        Nur Mitglieder oder Owner des Boards dürfen eine Task erstellen.
+        """
+        user = self.request.user
+        board = serializer.validated_data.get("board")
+
+        if not (board.owner == user or board.members.filter(id=user.id).exists()):
+            raise PermissionDenied("Du darfst in diesem Board keine Task erstellen.")
+
+        serializer.save(owner=user)
+
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /api/tasks/<task_id>/        → Einzelne Task abrufen
-    PATCH  /api/tasks/<task_id>/        → Task teilweise aktualisieren
-    PUT    /api/tasks/<task_id>/        → Task vollständig aktualisieren
-    DELETE /api/tasks/<task_id>/        → Task löschen
-    """
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        task_id = self.kwargs["task_id"]
-
-        try:
-            task = Task.objects.get(pk=task_id)
-        except Task.DoesNotExist:
-            raise NotFound("Task nicht gefunden.")
+        task_id = self.kwargs.get("task_id")
+        task = get_object_or_404(Task, pk=task_id)
 
         user = self.request.user
         if not (task.owner == user or task.assignee == user or task.reviewer == user):
-            raise PermissionDenied("Du darfst diese Task nicht bearbeiten oder löschen.")
+            raise PermissionDenied("Du darfst diese Task nicht ansehen, bearbeiten oder löschen.")
 
         return task
 
@@ -55,19 +54,13 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class TaskCommentsView(generics.ListCreateAPIView):
-    """
-    GET  -> gibt alle Kommentare einer Task zurück
-    POST -> erstellt einen neuen Kommentar für die Task
-    """
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_task(self):
-        """Holt die Task oder wirft 404, falls sie nicht existiert."""
-        try:
-            return Task.objects.get(pk=self.kwargs["task_id"])
-        except Task.DoesNotExist:
-            raise NotFound(detail="Task nicht gefunden. Die angegebene Task-ID existiert nicht.")
+        task_id = self.kwargs.get("task_id")
+        task = get_object_or_404(Task, pk=task_id)
+        return task
 
     def get_queryset(self):
         """Liefert alle Kommentare zur Task, sofern der User Zugriff hat."""
@@ -105,18 +98,10 @@ class TaskCommentDetailView(generics.DestroyAPIView):
         task_id = self.kwargs["task_id"]
         comment_id = self.kwargs["comment_id"]
 
-        try:
-            task = Task.objects.get(pk=task_id)
-        except Task.DoesNotExist:
-            raise NotFound("Task nicht gefunden.")
-
-        try:
-            comment = Comment.objects.get(pk=comment_id, task=task)
-        except Comment.DoesNotExist:
-            raise NotFound("Kommentar nicht gefunden.")
+        task = get_object_or_404(Task, pk=task_id)
+        comment = get_object_or_404(Comment, pk=comment_id, task=task)
 
         user = self.request.user
-
         if not (comment.author == user or task.owner == user):
             raise PermissionDenied("Du darfst diesen Kommentar nicht löschen.")
 
