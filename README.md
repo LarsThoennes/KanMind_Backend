@@ -56,7 +56,7 @@ python manage.py makemigrations
 ```bash
 python manage.py migrate
 ```
-## Optional) Create a superuser for the admin panel
+## (Optional) Create a superuser for the admin panel
 ```bash
 python manage.py createsuperuser
 ```
