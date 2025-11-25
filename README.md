@@ -47,6 +47,19 @@ venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+
+## Create migrations
+```bash
+python manage.py makemigrations
+```
+## Apply migrations
+```bash
+python manage.py migrate
+```
+## Optional) Create a superuser for the admin panel
+```bash
+python manage.py createsuperuser
+```
 ## Run the Development Server
 ```bash
 python manage.py runserver
