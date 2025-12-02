@@ -7,7 +7,7 @@ from .serializers import (
     BoardDetailWithOwnerSerializer,
 )
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -66,20 +66,26 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         return BoardDetailSerializer
 
     def get_object(self):
-        """
-        Retrieves the board instance from the filtered queryset.
-        Converts unauthorized access into a 403 Forbidden error.
-        """
-        try:
-            board = super().get_object()
-        except Exception:
-            raise PermissionDenied("You are not allowed to view or modify this board.")
+       """
+       Retrieves the board instance.
+       Returns 404 if not found, and 403 if user not allowed to access.
+       """
+       lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+       lookup_value = self.kwargs.get(lookup_url_kwarg)
 
-        # Only the board owner can modify or delete the board
-        if self.request.method in ["PATCH", "PUT", "DELETE"] and board.owner != self.request.user:
-            raise PermissionDenied("Only the board owner can modify or delete this board.")
+       try:
+           board = Board.objects.get(**{self.lookup_field: lookup_value})
+       except Board.DoesNotExist:
+           raise NotFound("Board not found.")
 
-        return board
+       user = self.request.user
+       if not board.members.filter(id=user.id).exists():
+           raise PermissionDenied("You are not a member of this board.")
+
+       if self.request.method in ["PATCH", "PUT", "DELETE"] and board.owner != user:
+           raise PermissionDenied("Only the board owner can modify or delete this board.")
+
+       return board
 
     def perform_destroy(self, instance):
         """
