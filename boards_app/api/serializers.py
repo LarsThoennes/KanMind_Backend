@@ -152,20 +152,34 @@ class BoardDetailSerializer(serializers.ModelSerializer):
 
         return instance
 
-class BoardDetailWithOwnerSerializer(BoardDetailSerializer):
-    """
-    Extended board detail serializer including full owner and member details.
-
-    Used for endpoints that require richer data (e.g., PATCH/PUT views).
-    """
+class BoardDetailWithOwnerSerializer(serializers.ModelSerializer):
     owner_data = UserCompactSerializer(source="owner", read_only=True)
+
+    members = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=User.objects.all(),
+        write_only=True
+    )
     members_data = UserCompactSerializer(source="members", many=True, read_only=True)
 
-    class Meta(BoardDetailSerializer.Meta):
+    class Meta:
+        model = Board
         fields = [
             "id",
             "title",
             "owner_data",
-            "members_data",
-            "member_ids",
+            "members",      
+            "members_data",  
         ]
+
+    def update(self, instance, validated_data):
+        """
+        Aktualisiert Titel und Members, wenn angegeben.
+        """
+        members = validated_data.pop("members", None)
+        instance = super().update(instance, validated_data)
+
+        if members is not None:
+            instance.members.set(members)
+
+        return instance
