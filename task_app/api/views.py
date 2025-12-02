@@ -32,13 +32,13 @@ class TasksView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """
-        Ensures only board owners or members can create tasks.
+        Ensures only board members can create tasks.
         """
         user = self.request.user
         board = serializer.validated_data.get("board")
 
-        if not (board.owner == user or board.members.filter(id=user.id).exists()):
-            raise PermissionDenied("You are not allowed to create a task in this board.")
+        if not board.members.filter(id=user.id).exists():
+            raise PermissionDenied("You must be a member of this board to create a task.")
 
         serializer.save(owner=user)
 

@@ -23,12 +23,11 @@ class BoardsView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Returns all boards accessible to the logged-in user
-        (either as the owner or as a member).
-        """
-        user = self.request.user
-        return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+       """
+       Nur Boards, bei denen der aktuelle User Mitglied ist.
+       """
+       user = self.request.user
+       return Board.objects.filter(members=user).distinct()
 
     def perform_create(self, serializer):
         """
@@ -50,12 +49,12 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Returns only boards that the current user is allowed to access.
-        This includes boards where the user is either the owner or a member.
-        """
-        user = self.request.user
-        return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+       """
+       Nur Boards, bei denen der aktuelle User Mitglied ist.
+       """
+       user = self.request.user
+       return Board.objects.filter(members=user).distinct()
+
 
     def get_serializer_class(self):
         """

@@ -112,13 +112,11 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     """
     Detailed serializer for a single board.
 
-    Includes:
-    - owner ID
-    - member details
-    - editable member IDs
-    - associated tasks
+    - 'members' unterstützt sowohl Lesen (mit User-Daten)
+      als auch Schreiben (per IDs).
     """
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
+
     members = UserCompactSerializer(many=True, read_only=True)
     member_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -127,6 +125,7 @@ class BoardDetailSerializer(serializers.ModelSerializer):
         required=False,
         source="members",
     )
+
     tasks = TaskCompactSerializer(many=True, read_only=True)
 
     class Meta:
@@ -135,22 +134,23 @@ class BoardDetailSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "owner_id",
-            "members",
-            "member_ids",
+            "members",     
+            "member_ids", 
             "tasks",
         ]
-        read_only_fields = ["id", "owner_id", "members", "tasks"]
+        read_only_fields = ["id", "owner_id", "tasks"]
 
     def update(self, instance, validated_data):
         """
-        Updates board data and synchronizes member relationships if provided.
+        Aktualisiert Board-Daten und synchronisiert Member-Beziehungen.
         """
-        members = validated_data.pop("members", None)
+        members = validated_data.pop("members", serializers.empty)
         instance = super().update(instance, validated_data)
-        if members is not None:
-            instance.members.set(members)
-        return instance
 
+        if members is not serializers.empty:
+            instance.members.set(members)
+
+        return instance
 
 class BoardDetailWithOwnerSerializer(BoardDetailSerializer):
     """
