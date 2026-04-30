@@ -33,7 +33,12 @@ SECRET_KEY = 'django-insecure-vnbr&6+iwh(x0y(*#u2(h1*5hz-hb13(*wyfu*r07whoumgepp
 DEBUG = os.getenv("DEBUG") == "True"
 
 CORS_ALLOW_ALL_ORIGINS = True
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+# ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+ALLOWED_HOSTS = [
+    '.heroku.com',
+    'localhost',
+    '127.0.0.1'
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5500",
