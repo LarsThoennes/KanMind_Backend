@@ -11,4 +11,4 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
-CMD gunicorn backend.wsgi:application --bind 0.0.0.0:8000
+CMD gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT

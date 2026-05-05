@@ -27,7 +27,7 @@ if os.path.exists(BASE_DIR / ".env"):
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vnbr&6+iwh(x0y(*#u2(h1*5hz-hb13(*wyfu*r07whoumgepp'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
@@ -37,9 +37,11 @@ ALLOWED_HOSTS = os.environ.get(
     "http://localhost,http://127.0.0.1"
 ).split(",")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5500",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5500"
+).split(",")
+
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
     "http://localhost,http://127.0.0.1"
